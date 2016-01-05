@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<html ng-app="App">
+<head>
+    <meta charset="UTF-8">
+    <title>ToDoList</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.1.5/angular.min.js "></script>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css" rel="stylesheet" />
+    <script>
+        var delIndex;
+        var styleIndex;
+        var projectData;
+        var categoriesData;
+        var loadFromStorage = function () {
+            console.log("load");
+            var todoString = window.localStorage['hw2test'];
+            projectData = todoString ? angular.fromJson(todoString) || [] : [];
+        };
+        loadFromStorage();
+        var loadFromCategories = function () {
+            console.log("load");
+            var todoString = window.localStorage['hw2categories'];
+            categoriesData = todoString ? angular.fromJson(todoString) || [] : [];
+        };
+        loadFromCategories();
+        var updateLocalStorage = function(todos){
+            console.log("update");
+            window.localStorage['hw2test'] = angular.toJson(todos);
+        };
+        var updateLocalCategories = function(todos){
+            console.log("update");
+            window.localStorage['hw2categories'] = angular.toJson(todos);
+        };
+
+        var toDoListApp = angular.module("App", [])
+                .controller("AppCtrl", function($scope){
+                    $scope.data = projectData;
+                    $scope.addCat = false;
+                    $scope.filterCat = "";
+                    $scope.data.categories = categoriesData;
+                    $scope.dateMatchPattern = /^(19|20)\d\d([- /])(0[1-9]|1[012])\2(0[1-9]|[12][0-9]|3[01])$/;
+                    $scope.addNewTask = function (newTask, isvalid) {
+                        if (isvalid) {
+                            $scope.data.push({
+                                description: newTask.description,
+                                date: new Date(newTask.date),
+                                complete: false,
+                                category: newTask.category
+                            })
+                            $scope.newTask.description = "";
+                            $scope.newTask.date = "";
+                            $scope.newTask.category = "";
+                            $scope.frm.$setPristine();
+                            updateLocalStorage($scope.data);
+                        } else {
+                            $scope.showError = true;
+                        }
+                    }
+                    $scope.badgeNumber = function (item){
+                        var res = 0;
+                        for (var i = 0; i < $scope.data.length; i++){
+                            if ($scope.data[i].category == item){
+                                res++;
+                            }
+                        }
+                        return res;
+                    }
+                    $scope.deleteTask = function (listItem) {
+                        delIndex = $scope.data.indexOf(listItem);
+                        $scope.data.splice(delIndex, 1);
+                        updateLocalStorage($scope.data);
+                    }
+                    $scope.setStyle = function (listItem) {
+                        listItem.complete = true;
+                        updateLocalStorage($scope.data);
+                    }
+                    $scope.addCategory = function () {
+                        $scope.addCat = true;
+                    }
+                    $scope.saveCategory = function (newCategory, isvalid) {
+                        if (isvalid){
+                            $scope.data.categories.push(newCategory.name);
+                            console.log($scope.data.categories);
+                            $scope.newCategory.name = "";
+                            $scope.catfrm.$setPristine();
+                            $scope.addCat = false;
+                            updateLocalCategories($scope.data.categories);
+                            console.log($scope.data.categories);
+                        } else{
+                            $scope.showError = true;
+                        }
+                    }
+                    $scope.newFilterCat = function (category) {
+                        $scope.filterCat = category;
+                    }
+                    $scope.deleteDone = function () {
+                        var newScope = new Array();
+                        for (var i = 0; i < $scope.data.length; i++){
+                            if ($scope.data[i].complete != true){
+                                newScope.push($scope.data[i]);
+                            }
+                        }
+                        var tmp = $scope.data.categories;
+                        $scope.data = newScope;
+                        $scope.data.categories = tmp;
+                        updateLocalStorage($scope.data);
+                    }
+                    $scope.getError = function (error) {
+                        if (angular.isDefined(error)) {
+                            if (error.required) {
+                                return "Поле не должно быть пустым";
+                            } if (error.pattern){
+                                return "Pattern";
+                            } if (error.maxlength){
+                                return "Max length"
+                            } if (error.minlength){
+                                return "Min length"
+                            }
+                        }
+                    }
+                })
+    </script>
+    <style>
+        .category {
+            position: relative;
+            top: 6px;
+        }
+        .complete-true {
+            text-decoration: line-through;
+            color: #ddd;
+        }
+        form .ng-invalid-required.ng-dirty {
+            background-color: lightpink;
+        }
+
+        form .ng-invalid-email.ng-dirty {
+            background-color: lightgoldenrodyellow;
+        }
+
+        form .ng-invalid-pattern.ng-dirty {
+            background-color: lightgoldenrodyellow;
+        }
+        form .ng-invalid-maxlength.ng-dirty {
+            background-color: lightpink;
+        }
+        form .ng-invalid-minlength.ng-dirty {
+            background-color: lightpink;
+        }
+
+        form .ng-valid.ng-dirty {
+            background-color: lightgreen;
+        }
+
+        span.summary.ng-invalid {
+            color: red;
+            font-weight: bold;
+        }
+
+        span.summary.ng-valid {
+            color: green;
+        }
+
+        div.error {
+            color: red;
+            font-weight: bold;
+        }
+        #header{
+
+            position: relative;
+            top: -40px;
+            background: -webkit-linear-gradient(90deg, #1A2980 10%, #26D0CE 90%); /* Chrome 10+, Saf5.1+ */
+            background:    -moz-linear-gradient(90deg, #1A2980 10%, #26D0CE 90%); /* FF3.6+ */
+            background:     -ms-linear-gradient(90deg, #1A2980 10%, #26D0CE 90%); /* IE10 */
+            background:      -o-linear-gradient(90deg, #1A2980 10%, #26D0CE 90%); /* Opera 11.10+ */
+            background:         linear-gradient(90deg, #1A2980 10%, #26D0CE 90%); /* W3C */
+
+        }
+        .animate-enter,
+        .animate-leave {
+            -webkit-transition: 400ms cubic-bezier(0.250, 0.250, 0.750, 0.750) all;
+            -moz-transition: 400ms cubic-bezier(0.250, 0.250, 0.750, 0.750) all;
+            -ms-transition: 400ms cubic-bezier(0.250, 0.250, 0.750, 0.750) all;
+            -o-transition: 400ms cubic-bezier(0.250, 0.250, 0.750, 0.750) all;
+            transition: 400ms cubic-bezier(0.250, 0.250, 0.750, 0.750) all;
+            position: relative;
+            display: block;
+        }
+
+        .animate-leave.animate-leave-active,
+        .animate-enter {
+            -webkit-transform: rotateX(-180deg) translatez(30px);
+            -moz-transform: rotateX(-180deg) translatez(30px);
+            -ms-transform: rotateX(-180deg) translatez(30px);
+            -o-transform: rotateX(-180deg) translatez(30px);
+            transform: rotateX(-180deg) translatez(30px);
+            opacity: 0;
+            height: 0px;
+        }
+
+        .animate-enter.animate-enter-active,
+        .animate-leave {
+            -webkit-transform: rotateX(0deg) translatez(30px);
+            -moz-transform: rotateX(0deg) translatez(30px);
+            -ms-transform: rotateX(0deg) translatez(30px);
+            -o-transform: rotateX(0deg) translatez(30px);
+            transform: rotateX(0deg) translatez(30px);
+            opacity: 1;
+            height: 30px;
+        }
+    </style>
+</head>
+<body ng-controller="AppCtrl">
+<div class="page-header" align="center">
+    <h1>
+        ToDo List
+    </h1>
+</div>
+<div class="container">
+    <h3 align="center">Your tasks is here!</h3>
+    <p align="center">Ideal app!</p>
+    <div class="panel col-md-3 category">
+        <table class="table table-hover">
+            <tr>
+                <th>Category <button class="btn btn-info" ng-click="addCategory()">+</button></th>
+            </tr>
+            <tr ng-repeat="val in data.categories" >
+                <td ng-click="newFilterCat(val)" style="cursor: pointer">{{val}} <span class="badge">{{badgeNumber(val)}}</span></td>
+            </tr>
+            <tr><td ng-show="addCat == true">
+                <form name="catfrm" novalidate ng-submit="saveCategory(newCategory, catfrm.$valid)">
+                    <input ng-model="newCategory.name"
+                           class="form-control"
+                           required
+                           ng-minlength="3"
+                           ng-maxlength="10"><br>
+                    <div class="input-btn" align="center">
+                    <button class="btn btn-info" ng-disabled="catfrm.$invalid">Add category</button>
+                    </div>
+                </form>
+            </td></tr>
+            <tr><td><button class="btn btn-info" ng-click="filterCat=''">Clear Filter</button></td></tr>
+        </table>
+    </div>
+    <div class="panel col-md-9">
+        <table class="table table-hover">
+            <tr>
+                <th>#</th>
+                <th>Description</th>
+                <th>Date</th>
+                <th>Complete</th>
+            </tr>
+            <tr ng-repeat="listItem in data | filter:{category:filterCat}">
+                <td class="complete-{{listItem.complete}}">{{$index+1}}</td>
+                <td class="complete-{{listItem.complete}}">{{listItem.description}}</td>
+                <td class="complete-{{listItem.complete}}">{{listItem.date | date: "yyyy-MM-dd"}}</td>
+                <td><button class="btn btn-success" ng-click="setStyle(listItem)">Complete</button></td>
+                <td><button class="btn btn-danger" ng-click="deleteTask(listItem)">Delete</button></td>
+            </tr>
+        </table><br>
+        <button class="btn btn-info col-lg-12" ng-click="deleteDone()">Clear Completed</button>
+        <br>
+        <form name="frm" novalidate ng-submit="addNewTask(newTask, frm.$valid)">
+            <label for="desc">Description:</label>
+            <input ng-model="newTask.description"
+                   class="form-control"
+                   required
+                   ng-minlength="5"
+                   ng-maxlength="50"
+                   name="desc"
+                   id="desc">
+            <div class="error" ng-show="frm.desc.$invalid && frm.desc.$dirty">
+                {{getError(frm.desc.$error)}}
+            </div>
+            <label for="taskdate">Due Date:</label>
+            <input name="taskdate"
+                   type="text"
+                   class="form-control"
+                   ng-model="newTask.date"
+                   id="taskDate"
+                   required
+                   placeholder="yyyy-/MM-/dd"
+                   ng-pattern="dateMatchPattern"
+                    />
+            <div class="error" ng-show="frm.taskdate.$invalid && frm.taskdate.$dirty">
+                {{getError(frm.taskdate.$error)}}
+            </div>
+            <label for="categ">Category:</label>
+            <select class="form-control"
+                    id="categ"
+                    required
+                    ng-model="newTask.category"
+                    ng-options="values as values for values in data.categories" ></select><br/>
+            <div class="input-btn" align="center">
+                <button class="btn btn-default"
+                   ng-disabled="frm.$invalid">Add</button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>
